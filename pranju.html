@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 API Demo</title>
+    <style>
+        :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: sans-serif; background: var(--bg); max-width: 700px; margin: 2rem auto; padding: 1rem; }
+        .section { background: var(--card); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        h2 { color: var(--primary); margin-top: 0; }
+        
+        /* Drag and Drop Styles */
+        .drop-zone { border: 2px dashed #cbd5e1; padding: 2rem; text-align: center; border-radius: 8px; background: #f1f5f9; min-height: 50px; transition: 0.3s; }
+        .drag-over { border-color: var(--primary); background: #e0e7ff; }
+        .draggable-box { display: inline-block; padding: 10px 20px; background: var(--primary); color: white; border-radius: 6px; cursor: grab; margin-bottom: 10px; }
+        
+        /* Layout elements */
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        button { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .status { margin-top: 10px; font-size: 0.9rem; color: #64748b; }
+    </style>
+</head>
+<body>
+
+    <h1>HTML5 API Demo</h1>
+
+    <!-- Geolocation & Storage Section -->
+    <div class="section">
+        <h2>1. Geolocation & Web Storage</h2>
+        <p>Save your location to the browser's <code>localStorage</code>.</p>
+        <input type="text" id="userName" placeholder="Enter name">
+        <button onclick="saveAndLocate()">Save Profile</button>
+        <button onclick="clearData()" style="background:#ef4444">Clear</button>
+        <div id="profileDisplay" class="status">No data saved.</div>
+    </div>
+
+    <!-- Drag and Drop Section -->
+    <div class="section">
+        <h2>2. Drag and Drop</h2>
+        <p>Drag the badge into the box below.</p>
+        <div id="dragMe" class="draggable-box" draggable="true">Drag Me!</div>
+        <div id="target" class="drop-zone">Drop Here</div>
+        <div id="dragStatus" class="status">Waiting...</div>
+    </div>
+
+    <script>
+        // --- GEOLOCATION & STORAGE ---
+        const display = document.getElementById('profileDisplay');
+
+        function saveAndLocate() {
+            const name = document.getElementById('userName').value;
+            if (!name) return alert("Please enter a name");
+
+            if ("geolocation" in navigator) {
+                display.innerText = "Accessing location...";
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const data = {
+                        name: name,
+                        lat: pos.coords.latitude.toFixed(2),
+                        lon: pos.coords.longitude.toFixed(2)
+                    };
+                    // Save to Web Storage
+                    localStorage.setItem('userProfile', JSON.stringify(data));
+                    updateUI();
+                });
+            }
+        }
+
+        function updateUI() {
+            const stored = localStorage.getItem('userProfile');
+            if (stored) {
+                const user = JSON.parse(stored);
+                display.innerHTML = `<strong>Stored:</strong> Hello ${user.name}! (Lat: ${user.lat}, Lon: ${user.lon})`;
+            } else {
+                display.innerText = "No data saved.";
+            }
+        }
+
+        function clearData() {
+            localStorage.removeItem('userProfile');
+            updateUI();
+        }
+
+        // --- DRAG AND DROP ---
+        const dragItem = document.getElementById('dragMe');
+        const dropZone = document.getElementById('target');
+        const dragStatus = document.getElementById('dragStatus');
+
+        dragItem.ondragstart = (e) => {
+            e.dataTransfer.setData("text", "Drop received!");
+            dragStatus.innerText = "Dragging...";
+        };
+
+        dropZone.ondragover = (e) => e.preventDefault(); // Required to allow drop
+
+        dropZone.ondragenter = () => dropZone.classList.add('drag-over');
+        dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const message = e.dataTransfer.getData("text");
+            dropZone.innerText = message;
+            dragStatus.innerText = "Success!";
+        };
+
+        // Initialize display
+        updateUI();
+    </script>
+</body>
+</html>
